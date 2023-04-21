@@ -1,15 +1,16 @@
 
 package com.tads.dac.conta.service;
 
+import com.tads.dac.conta.DTOs.ContaDTO;
+import com.tads.dac.conta.DTOs.OperacaoBdDTO;
 import com.tads.dac.conta.DTOs.OperacaoDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.InvalidMovimentacaoException;
 import com.tads.dac.conta.exception.InvalidValorException;
 import com.tads.dac.conta.exception.OperacaoDoesntExist;
-import com.tads.dac.conta.model.Conta;
-import com.tads.dac.conta.model.Operacao;
-import com.tads.dac.conta.repository.ContaRepository;
-import com.tads.dac.conta.repository.OperacaoRepository;
+import com.tads.dac.conta.mensageria.ProducerContaSync;
+import com.tads.dac.conta.modelCUD.ContaCUD;
+import com.tads.dac.conta.modelCUD.OperacaoCUD;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,20 +21,33 @@ import java.util.Optional;
 import javax.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.tads.dac.conta.repositoryCUD.ContaRepositoryCUD;
+import com.tads.dac.conta.repositoryCUD.OperacaoRepositoryCUD;
+import com.tads.dac.conta.repositoryR.OperacaoRepositoryR;
+import org.modelmapper.ModelMapper;
 
 @Service
-public class OperacaoServiceImp{
+public class OperacaoServiceCUD{
     
     @Autowired
-    ContaRepository repConta;
+    private ContaRepositoryCUD repConta;
     
     @Autowired
-    OperacaoRepository repOp;
+    private OperacaoRepositoryCUD repOpCUD;
+    
+    @Autowired
+    private OperacaoRepositoryR repOpR;
+    
+    @Autowired
+    private ProducerContaSync mensagemProducer;
+    
+    @Autowired
+    private ModelMapper mapper;
 
     
     public List<OperacaoDTO> getExtrato(Long id, Date inicio, Date fim) throws ClienteNotFoundException{
        
-        List<Tuple> tuples = repOp.getExtrato(id, inicio, fim);
+        List<Tuple> tuples = repOpR.getExtrato(id, inicio, fim);
         
         
         List<OperacaoDTO> dtos = new ArrayList<>();
@@ -59,24 +73,28 @@ public class OperacaoServiceImp{
     }
 
     
-    public Operacao fazDeposito(Long contaId, BigDecimal valor) throws ClienteNotFoundException {
-        Operacao op = new Operacao();
+    public OperacaoBdDTO fazDeposito(Long contaId, BigDecimal valor) throws ClienteNotFoundException, InvalidValorException {
+        OperacaoCUD op = new OperacaoCUD();
         try {
-            Optional<Conta> ct = repConta.findById(contaId);
+            Optional<ContaCUD> ct = repConta.findById(contaId);
             if (!ct.isPresent()) throw new ClienteNotFoundException("O Cliente Que Faz a Transferência Não Existe.");
-
+            if(valor.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidValorException("O valor de Deposito Tem Que ser Maior Que Zero");
+            
             op.setParaUser(ct.get());
             op.setDeUser(null);
             op.setValor(valor);
             op.setOperacao("D");
             op.setDataTempo(null);
 
-            op = repOp.save(op);
+            op = repOpCUD.save(op);
+            
+            OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
+            mensagemProducer.syncOperacao(dto); //Manda msg
 
             BigDecimal saldo = ct.get().getSaldo().add(valor); // Adiciona ao Saldo
             updateSaldo(contaId, saldo);
 
-            return op;
+            return dto;
             
         } catch (ClienteNotFoundException e) {
             throw new ClienteNotFoundException("O Cliente com essa conta não existe");
@@ -84,10 +102,10 @@ public class OperacaoServiceImp{
     }
 
     
-    public Operacao fazSaque(Long contaId, BigDecimal valor) throws ClienteNotFoundException, InvalidMovimentacaoException, InvalidValorException {
-        Operacao op = new Operacao();
+    public OperacaoBdDTO fazSaque(Long contaId, BigDecimal valor) throws ClienteNotFoundException, InvalidMovimentacaoException, InvalidValorException {
+        OperacaoCUD op = new OperacaoCUD();
         try {
-            Optional<Conta> ct = repConta.findById(contaId);
+            Optional<ContaCUD> ct = repConta.findById(contaId);
             if (!ct.isPresent()) throw new ClienteNotFoundException("O Cliente Requerendo o Saque Não Existe.");
             if(valor.compareTo(BigDecimal.ZERO) <= 0) throw new InvalidValorException("O valor de Transferencia Tem Que ser Maior Que Zero");
             
@@ -101,25 +119,27 @@ public class OperacaoServiceImp{
             op.setOperacao("S");
             op.setDataTempo(null);
 
-            op = repOp.save(op);
+            op = repOpCUD.save(op);
+            
+            OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
+            mensagemProducer.syncOperacao(dto);
 
             BigDecimal saldo = ct.get().getSaldo().subtract(valor); // Subtrai do Saldo
 
             updateSaldo(contaId, saldo);
 
-            return op;
+            return dto;
         } catch (ClienteNotFoundException e) {
             throw new ClienteNotFoundException("O Cliente com essa conta não existe");
         }
     }
 
-    public Operacao fazTransferencia(Long deId, Long paraId, BigDecimal valor) throws ClienteNotFoundException, InvalidMovimentacaoException, InvalidValorException {
-        Operacao op = new Operacao();
+    public OperacaoBdDTO fazTransferencia(Long deId, Long paraId, BigDecimal valor) throws ClienteNotFoundException, InvalidMovimentacaoException, InvalidValorException {
+        OperacaoCUD op = new OperacaoCUD();
         try {
-            System.out.println("Long: " + deId + " " + paraId);
             
-            Optional<Conta> ctDe = repConta.findById(deId);
-            Optional<Conta> ctPara = repConta.findById(paraId);
+            Optional<ContaCUD> ctDe = repConta.findById(deId);
+            Optional<ContaCUD> ctPara = repConta.findById(paraId);
             
             if(!ctDe.isPresent()) throw new ClienteNotFoundException("O Cliente Que Faz a Transferência Não Existe.");
             if(!ctPara.isPresent()) throw new ClienteNotFoundException("O Cliente Que Recebe a Transferência Não Existe.");
@@ -137,7 +157,10 @@ public class OperacaoServiceImp{
             op.setOperacao("T");
             op.setDataTempo(null); 
             
-            op = repOp.save(op); // Salva Operação
+            op = repOpCUD.save(op); // Salva Operação
+            
+            OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
+            mensagemProducer.syncOperacao(dto); //Manda msg
 
             BigDecimal saldoDe = ctDe.get().getSaldo().subtract(valor); // Subtrai do remetente
             updateSaldo(deId, saldoDe);
@@ -145,18 +168,21 @@ public class OperacaoServiceImp{
             BigDecimal saldoPara = ctPara.get().getSaldo().add(valor); // Adiciona ao destinatario
             updateSaldo(paraId, saldoPara);    
             
-            return op;
+            return dto;
         } catch (ClienteNotFoundException e) {
             throw new ClienteNotFoundException("O Cliente com essa conta não existe");
         }    
     }
     
-    public Conta updateSaldo(Long contaId, BigDecimal saldo) throws ClienteNotFoundException {
-        Optional<Conta> conta = repConta.findById(contaId);
+    public ContaCUD updateSaldo(Long contaId, BigDecimal saldo) throws ClienteNotFoundException {
+        Optional<ContaCUD> conta = repConta.findById(contaId);
         if(conta.isPresent()){
-            Conta ct = conta.get();
+            ContaCUD ct = conta.get();
             ct.setSaldo(saldo);
-            return repConta.save(ct);
+            ct = repConta.save(ct);
+            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            mensagemProducer.syncConta(dto); 
+            return ct;
         }else{
             throw new ClienteNotFoundException("O Cliente com essa conta ("+ contaId+") não existe");
         }

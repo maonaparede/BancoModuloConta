@@ -1,6 +1,7 @@
 
-package com.tads.dac.conta.model;
+package com.tads.dac.conta.modelR;
 
+import com.tads.dac.conta.modelCUD.*;
 import java.math.BigDecimal;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -26,13 +27,13 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @Entity
 @Table(name = "tb_operacao")
-public class Operacao {
+public class OperacaoR {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
     
     @CreationTimestamp
+    @Column(name = "data_tempo")
     private Date dataTempo;
     
     private BigDecimal valor;
@@ -41,11 +42,11 @@ public class Operacao {
     
     @ManyToOne
     @JoinColumn(name = "de_user")
-    private Conta deUser;
+    private ContaR deUser;
     
     @ManyToOne
     @JoinColumn(name = "para_user")
-    private Conta paraUser;
+    private ContaR paraUser;
   
     
 }

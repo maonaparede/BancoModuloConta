@@ -7,8 +7,9 @@ import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
 import com.tads.dac.conta.exception.SituacaoInvalidaException;
-import com.tads.dac.conta.model.Conta;
-import com.tads.dac.conta.repository.ContaRepository;
+import com.tads.dac.conta.mensageria.ProducerContaSync;
+import com.tads.dac.conta.modelCUD.ContaCUD;
+import com.tads.dac.conta.modelR.ContaR;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -19,16 +20,29 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import com.tads.dac.conta.repositoryCUD.ContaRepositoryCUD;
+import com.tads.dac.conta.repositoryR.ContaRepositoryR;
+import java.util.stream.Collectors;
+import org.modelmapper.ModelMapper;
 
 @Service
-public class ContaServiceImp{
+public class ContaServiceCUD{
 
     @Autowired
-    private ContaRepository rep;
+    private ContaRepositoryCUD repCUD;
     
-    public Conta save(Long idCliente) throws ContaConstraintViolation{
+    @Autowired
+    private ContaRepositoryR repR;
+    
+    @Autowired
+    private ModelMapper mapper;
+
+    @Autowired
+    private ProducerContaSync mensagemProducer;
+    
+    public ContaDTO save(Long idCliente) throws ContaConstraintViolation{
         try{
-            Conta savConta = new Conta();
+            ContaCUD savConta = new ContaCUD();
             savConta.setSaldo(BigDecimal.ZERO);
             savConta.setSituacao("E");
             savConta.setLimite(BigDecimal.ZERO);
@@ -36,7 +50,13 @@ public class ContaServiceImp{
             savConta.setIdConta(null);
             savConta.setDataAproRep(null);
             savConta.setDataCriacao(null);
-            return rep.save(savConta);
+            
+            savConta = repCUD.save(savConta);
+            
+            ContaDTO dto = mapper.map(savConta, ContaDTO.class);
+            mensagemProducer.syncConta(dto);
+            
+            return dto;
         }catch(DataIntegrityViolationException e){
             SQLException ex = ((ConstraintViolationException) e.getCause()).getSQLException();
             String campo = ex.getMessage();
@@ -46,22 +66,30 @@ public class ContaServiceImp{
     }
     
     
-    public Conta updateSituacao(ContaSituacaoDTO dto) throws ClienteNotFoundException, SituacaoInvalidaException{
-        Optional<Conta> conta = rep.findById(dto.getContaId());
+    public ContaDTO updateSituacao(ContaSituacaoDTO dto) throws ClienteNotFoundException, SituacaoInvalidaException{
+        Optional<ContaCUD> conta = repCUD.findById(dto.getContaId());
         if(conta.isPresent()){
-            Conta ct = conta.get();
+            ContaCUD ct = conta.get();
             Date dt = Date.from(Instant.now());
             if("A".equals(dto.getSituacao())){
                 ct.setSituacao("A");
                 ct.setLimite(dto.getSalario().divide(BigDecimal.valueOf(2)));
                 ct.setDataAproRep(dt);
-                ct = rep.save(ct);
-                return ct;
+                ct = repCUD.save(ct);
+                
+                ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+                mensagemProducer.syncConta(dto2);
+                
+                return dto2;
             }else if("R".equals(dto.getSituacao())){
                 ct.setSituacao("R");
                 ct.setDataAproRep(dt);
-                ct = rep.save(ct);
-                return ct;
+                ct = repCUD.save(ct);
+                
+                ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+                mensagemProducer.syncConta(dto2);
+                
+                return dto2;
             }
             throw new SituacaoInvalidaException("Esse Estado de Situação Não Existe");
         }else{
@@ -70,13 +98,13 @@ public class ContaServiceImp{
     }
 
     
-    public Conta updateLimite(Long contaId, BigDecimal salario) throws ClienteNotFoundException, NegativeSalarioException{
+    public ContaDTO updateLimite(Long contaId, BigDecimal salario) throws ClienteNotFoundException, NegativeSalarioException{
         if(salario.compareTo(BigDecimal.ONE) < 1){
             throw new NegativeSalarioException("O Salário do Cliente deve ser Maior que R$1");
         }
-        Optional<Conta> conta = rep.findById(contaId);
+        Optional<ContaCUD> conta = repCUD.findById(contaId);
         if(conta.isPresent()){
-            Conta ct = conta.get();
+            ContaCUD ct = conta.get();
             BigDecimal saldo = ct.getSaldo();
             BigDecimal limite = salario.divide(BigDecimal.valueOf(2)); //Calcula limite
             
@@ -88,26 +116,34 @@ public class ContaServiceImp{
                 }
             }
             ct.setLimite(limite);
-            ct = rep.save(ct);
-            return ct;
+            ct = repCUD.save(ct);
+            
+            ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+            mensagemProducer.syncConta(dto2);
+                
+            return dto2;
         }else{
             throw new ClienteNotFoundException("O Cliente com essa conta não existe");
         }
     }
     
     
-    public Conta getById(Long id) throws ClienteNotFoundException {
-        Optional<Conta> conta = rep.findById(id);
+    public ContaDTO getById(Long id) throws ClienteNotFoundException {
+        Optional<ContaR> conta = repR.findById(id);
         if(conta.isPresent()){
-            return conta.get();
+            ContaDTO dto = mapper.map(conta.get(), ContaDTO.class);
+            return dto;
         }
         
         throw new ClienteNotFoundException("O Cliente com essa conta não existe");
     }
     
-    public List<Conta> getAllSituacaoEsperando(){
-        List<Conta> contas = rep.findAllBySituacao("E");
-        return contas;
+    public List<ContaDTO> getAllSituacaoEsperando(){
+        List<ContaR> contas = repR.findAllBySituacao("E");
+        List<ContaDTO> contaList = contas.stream()
+                .map(item -> mapper.map(item, ContaDTO.class))
+                .collect(Collectors.toList());
+        return contaList;
     }
     
 }

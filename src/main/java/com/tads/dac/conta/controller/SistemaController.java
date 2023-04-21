@@ -8,8 +8,8 @@ import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
 import com.tads.dac.conta.exception.SituacaoInvalidaException;
-import com.tads.dac.conta.model.Conta;
-import com.tads.dac.conta.service.ContaServiceImp;
+import com.tads.dac.conta.modelCUD.ContaCUD;
+import com.tads.dac.conta.service.ContaServiceCUD;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.logging.Level;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class SistemaController {
     
     @Autowired
-    ContaServiceImp contaService;
+    ContaServiceCUD contaService;
     
     @Autowired
     ModelMapper mapper;
@@ -43,8 +43,7 @@ public class SistemaController {
     public ResponseEntity<?> save(@RequestBody ContaSaveDTO dtoR){
        
         try {
-            Conta ct = contaService.save(dtoR.getIdCliente());
-            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            ContaDTO dto = contaService.save(dtoR.getIdCliente());
             return new ResponseEntity<>(dto, HttpStatus.CREATED);
         }catch(ContaConstraintViolation e){
             String msg = e.getMessage();
@@ -56,8 +55,7 @@ public class SistemaController {
     public ResponseEntity<?> updateSituacao(@RequestBody ContaSituacaoDTO dtoR){
        
         try {
-            Conta ct = contaService.updateSituacao(dtoR);
-            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            ContaDTO dto = contaService.updateSituacao(dtoR);
             return new ResponseEntity<>(dto, HttpStatus.OK);
         }catch(SituacaoInvalidaException e){
             String msg = e.getMessage();
@@ -71,8 +69,7 @@ public class SistemaController {
     public ResponseEntity<?> updateLimite(@PathVariable(value = "id") Long id, @PathVariable(value = "salario") BigDecimal salario){
        
         try {
-            Conta ct = contaService.updateLimite(id, salario);
-            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            ContaDTO dto = contaService.updateLimite(id, salario);
             return new ResponseEntity<>(dto, HttpStatus.OK);
         } catch (ClienteNotFoundException ex) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -84,8 +81,7 @@ public class SistemaController {
     @GetMapping("/sys/{id}")
     public ResponseEntity<?> getById(@PathVariable(value = "id") Long id){       
         try{
-            Conta ct = contaService.getById(id);
-            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            ContaDTO dto  = contaService.getById(id);
             return new ResponseEntity<>(dto, HttpStatus.OK);
         }catch(ClienteNotFoundException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);   
@@ -93,12 +89,8 @@ public class SistemaController {
     }
 
     @GetMapping("/sys")
-    public ResponseEntity<?> getAllEsperando(){       
-        List<Conta> list = contaService.getAllSituacaoEsperando();
-        
-        List<ContaDTO> contaList = list.stream()
-                .map(item -> mapper.map(item, ContaDTO.class))
-                .collect(Collectors.toList());
+    public ResponseEntity<?> getAllEsperando(){        
+        List<ContaDTO> contaList = contaService.getAllSituacaoEsperando();
         
         return new ResponseEntity<>(contaList, HttpStatus.OK);
     }

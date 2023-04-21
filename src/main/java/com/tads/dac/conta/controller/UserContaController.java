@@ -5,14 +5,15 @@
 package com.tads.dac.conta.controller;
 
 import com.tads.dac.conta.DTOs.ContaDTO;
+import com.tads.dac.conta.DTOs.OperacaoBdDTO;
 import com.tads.dac.conta.DTOs.OperacaoDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.InvalidMovimentacaoException;
 import com.tads.dac.conta.exception.InvalidValorException;
-import com.tads.dac.conta.model.Conta;
-import com.tads.dac.conta.model.Operacao;
-import com.tads.dac.conta.service.ContaServiceImp;
-import com.tads.dac.conta.service.OperacaoServiceImp;
+import com.tads.dac.conta.modelCUD.ContaCUD;
+import com.tads.dac.conta.modelCUD.OperacaoCUD;
+import com.tads.dac.conta.service.ContaServiceCUD;
+import com.tads.dac.conta.service.OperacaoServiceCUD;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
@@ -36,20 +37,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class UserContaController {
     
     @Autowired
-    OperacaoServiceImp opService;
+    OperacaoServiceCUD opService;
   
     @Autowired
-    ContaServiceImp contaService;
-    
-    @Autowired
-    ModelMapper mapper;
+    ContaServiceCUD contaService;
     
    
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getContaInfo(@PathVariable("id") Long id){
         try{
-            Conta ct = contaService.getById(id);
-            ContaDTO dto = mapper.map(ct, ContaDTO.class);
+            ContaDTO dto = contaService.getById(id);          
             return new ResponseEntity<>(dto, HttpStatus.OK);
         }catch(ClienteNotFoundException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);   
@@ -76,7 +73,7 @@ public class UserContaController {
     @PostMapping("/user")
     public ResponseEntity<?> fazOperacao(@RequestBody OperacaoDTO op){
         try{
-            Operacao opRet = new Operacao();
+            OperacaoBdDTO opRet = new OperacaoBdDTO();
             switch (op.getOperacao()) {
                 case "S":
                     opRet = opService.fazSaque(op.getDeUser(), op.getValor());
@@ -91,7 +88,6 @@ public class UserContaController {
                     return new ResponseEntity<>("Essa Operação Não Existe", HttpStatus.BAD_REQUEST);
             }
             
-            //OperacaoDTO dto = mapper.map(opRet, OperacaoDTO.class);
             return new ResponseEntity<>(opRet, HttpStatus.OK);
             
         }catch(ClienteNotFoundException e){

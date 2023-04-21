@@ -1,16 +1,15 @@
 
-package com.tads.dac.conta.repository;
+package com.tads.dac.conta.repositoryR;
 
-import com.tads.dac.conta.model.Operacao;
+import com.tads.dac.conta.modelR.OperacaoR;
 import java.util.Date;
 import java.util.List;
 import javax.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 
-public interface OperacaoRepository extends JpaRepository<Operacao, Long> {
+public interface OperacaoRepositoryR extends JpaRepository<OperacaoR, Long> {
     
     @Query(nativeQuery = true,  
         value = "select id, data_tempo, operacao, valor, de_user, para_user from tb_operacao where" +

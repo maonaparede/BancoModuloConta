@@ -1,5 +1,5 @@
 
-package com.tads.dac.conta.model;
+package com.tads.dac.conta.modelCUD;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,10 +25,11 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @Entity
 @Table(name = "tb_conta")
-public class Conta implements Serializable{
+public class ContaCUD implements Serializable{
     
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "id_conta")
     private Long idConta;
     
     @Column(nullable = false)
@@ -48,7 +49,7 @@ public class Conta implements Serializable{
     private Date dataCriacao;
     
     @Temporal(TemporalType.TIMESTAMP)
-    private Date dataAproRep;   
+    private Date dataAproRep;
 
     @Column(columnDefinition = "VARCHAR(36)")
     private UUID saga;
