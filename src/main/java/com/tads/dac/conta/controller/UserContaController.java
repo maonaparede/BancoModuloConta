@@ -4,6 +4,7 @@
  */
 package com.tads.dac.conta.controller;
 
+import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
 import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.OperacaoBdDTO;
 import com.tads.dac.conta.DTOs.OperacaoDTO;
@@ -46,7 +47,7 @@ public class UserContaController {
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getContaInfo(@PathVariable("id") Long id){
         try{
-            ContaDTO dto = contaService.getById(id);          
+            ClienteContaInfoDTO dto = contaService.getById(id);          
             return new ResponseEntity<>(dto, HttpStatus.OK);
         }catch(ClienteNotFoundException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);   

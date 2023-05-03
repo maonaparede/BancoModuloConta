@@ -7,15 +7,13 @@ import com.tads.dac.conta.DTOs.OperacaoDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.InvalidMovimentacaoException;
 import com.tads.dac.conta.exception.InvalidValorException;
-import com.tads.dac.conta.exception.OperacaoDoesntExist;
 import com.tads.dac.conta.mensageria.ProducerContaSync;
+import com.tads.dac.conta.mensageria.ProducerGerenteSaldoSync;
 import com.tads.dac.conta.modelCUD.ContaCUD;
 import com.tads.dac.conta.modelCUD.OperacaoCUD;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import static java.util.Date.parse;
 import java.util.List;
 import java.util.Optional;
 import javax.persistence.Tuple;
@@ -39,7 +37,10 @@ public class OperacaoServiceCUD{
     private OperacaoRepositoryR repOpR;
     
     @Autowired
-    private ProducerContaSync mensagemProducer;
+    private ProducerContaSync contaSyncProducer;
+    
+    @Autowired
+    private ProducerGerenteSaldoSync gerenteSyncProducer;
     
     @Autowired
     private ModelMapper mapper;
@@ -89,7 +90,7 @@ public class OperacaoServiceCUD{
             op = repOpCUD.save(op);
             
             OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
-            mensagemProducer.syncOperacao(dto); //Manda msg
+            contaSyncProducer.syncOperacao(dto); //Manda msg
 
             BigDecimal saldo = ct.get().getSaldo().add(valor); // Adiciona ao Saldo
             updateSaldo(contaId, saldo);
@@ -122,7 +123,7 @@ public class OperacaoServiceCUD{
             op = repOpCUD.save(op);
             
             OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
-            mensagemProducer.syncOperacao(dto);
+            contaSyncProducer.syncOperacao(dto);
 
             BigDecimal saldo = ct.get().getSaldo().subtract(valor); // Subtrai do Saldo
 
@@ -160,7 +161,7 @@ public class OperacaoServiceCUD{
             op = repOpCUD.save(op); // Salva Operação
             
             OperacaoBdDTO dto = mapper.map(op, OperacaoBdDTO.class);
-            mensagemProducer.syncOperacao(dto); //Manda msg
+            contaSyncProducer.syncOperacao(dto); //Manda msg
 
             BigDecimal saldoDe = ctDe.get().getSaldo().subtract(valor); // Subtrai do remetente
             updateSaldo(deId, saldoDe);
@@ -181,7 +182,8 @@ public class OperacaoServiceCUD{
             ct.setSaldo(saldo);
             ct = repConta.save(ct);
             ContaDTO dto = mapper.map(ct, ContaDTO.class);
-            mensagemProducer.syncConta(dto); 
+            contaSyncProducer.syncConta(dto); //Sincroniza o bd de read
+            gerenteSyncProducer.syncClienteSaldo(contaId, saldo); //Manda o Saldo Pro Modulo do Gerente
             return ct;
         }else{
             throw new ClienteNotFoundException("O Cliente com essa conta ("+ contaId+") não existe");

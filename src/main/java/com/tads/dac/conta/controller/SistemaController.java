@@ -1,6 +1,7 @@
 
 package com.tads.dac.conta.controller;
 
+import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
 import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.ContaSaveDTO;
 import com.tads.dac.conta.DTOs.ContaSituacaoDTO;
@@ -8,15 +9,10 @@ import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
 import com.tads.dac.conta.exception.SituacaoInvalidaException;
-import com.tads.dac.conta.modelCUD.ContaCUD;
 import com.tads.dac.conta.service.ContaServiceCUD;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -81,7 +77,7 @@ public class SistemaController {
     @GetMapping("/sys/{id}")
     public ResponseEntity<?> getById(@PathVariable(value = "id") Long id){       
         try{
-            ContaDTO dto  = contaService.getById(id);
+            ClienteContaInfoDTO dto = contaService.getById(id);
             return new ResponseEntity<>(dto, HttpStatus.OK);
         }catch(ClienteNotFoundException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);   
