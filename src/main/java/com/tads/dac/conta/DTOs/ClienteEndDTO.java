@@ -2,15 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.tads.dac.conta.modelR;
+package com.tads.dac.conta.DTOs;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,20 +14,32 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-@Entity
-public class ClienteR implements Serializable{
-    
-    @Id
+public class ClienteEndDTO {
+ 
     private Long id;
     
-    @Column(nullable = false)
     private String nome;
     
-    @Column(nullable = false)
+    private String email;
+    
+    private String telefone;
+    
     private BigDecimal salario;
     
-    @Column(length = 11, nullable = false, unique = true)
     private String cpf;
     
-      
+    private String logradouro;
+    
+    private String complemento;
+    
+    private String cidade;
+    
+    private String estado;
+    
+    private String tipo;
+    
+    private String cep;
+    
+    private Integer numero;
+    
 }

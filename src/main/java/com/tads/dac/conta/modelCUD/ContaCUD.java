@@ -10,7 +10,6 @@ import javax.persistence.Table;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.UUID;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import lombok.AllArgsConstructor;
@@ -51,6 +50,8 @@ public class ContaCUD implements Serializable{
     @Temporal(TemporalType.TIMESTAMP)
     private Date dataAproRep;
 
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID saga;
+    private Long idGerente;
+    
+    private String nomeGerente;
+    
 }

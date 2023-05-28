@@ -23,10 +23,6 @@ public class ClienteContaInfoDTO {
     private BigDecimal salario;
     
     private String cpf;
-  
-    private String nomeGerente;
-    
-    private Long idGerente;
     
     private BigDecimal saldo;
     

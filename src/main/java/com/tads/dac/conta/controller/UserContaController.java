@@ -1,27 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/springframework/RestController.java to edit this template
- */
+
 package com.tads.dac.conta.controller;
 
 import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
-import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.OperacaoBdDTO;
 import com.tads.dac.conta.DTOs.OperacaoDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.InvalidMovimentacaoException;
 import com.tads.dac.conta.exception.InvalidValorException;
-import com.tads.dac.conta.modelCUD.ContaCUD;
-import com.tads.dac.conta.modelCUD.OperacaoCUD;
-import com.tads.dac.conta.service.ContaServiceCUD;
-import com.tads.dac.conta.service.OperacaoServiceCUD;
-import java.text.ParseException;
+import com.tads.dac.conta.service.ContaService;
+import com.tads.dac.conta.service.OperacaoService;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -38,10 +27,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class UserContaController {
     
     @Autowired
-    OperacaoServiceCUD opService;
+    OperacaoService opService;
   
     @Autowired
-    ContaServiceCUD contaService;
+    ContaService contaService;
     
    
     @GetMapping("/user/{id}")

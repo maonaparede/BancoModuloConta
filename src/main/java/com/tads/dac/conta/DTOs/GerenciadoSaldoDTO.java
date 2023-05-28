@@ -15,5 +15,6 @@ public class GerenciadoSaldoDTO {
     
     private Long idGerenciado;
     private BigDecimal saldo;
+    private Long idGerente;
     
 }

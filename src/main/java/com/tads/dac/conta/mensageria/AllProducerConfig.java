@@ -18,6 +18,13 @@ public class AllProducerConfig {
     @Value("gerente")
     private String queueGerente;
     
+    
+    @Value("conta-gerente")
+    private String queueContaGerente; 
+    
+    @Value("conta-gerente-rollback")
+    private String queueContaGerenteRollback;  
+    
     @Bean
     public Queue queueConta(){
         return new Queue(queueConta);
@@ -32,4 +39,14 @@ public class AllProducerConfig {
     public Queue queueCliente(){
         return new Queue(queueGerente);
     }
+        
+    @Bean
+    public Queue queueContaGerente(){
+        return new Queue(queueContaGerente);
+    }
+    
+    @Bean
+    public Queue queueContaGerenteRollback(){
+        return new Queue(queueContaGerenteRollback);
+    }    
 }

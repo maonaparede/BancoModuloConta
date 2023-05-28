@@ -3,8 +3,10 @@ package com.tads.dac.conta.service;
 
 import com.tads.dac.conta.DTOs.ClienteContaDTO;
 import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
+import com.tads.dac.conta.DTOs.ClienteEndDTO;
 import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.ContaSituacaoDTO;
+import com.tads.dac.conta.DTOs.MensagemDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 
 @Service
-public class ContaServiceCUD{
+public class ContaService{
 
     @Autowired
     private ContaRepositoryCUD repCUD;
@@ -105,15 +107,21 @@ public class ContaServiceCUD{
     }
 
     
-    public ContaDTO updateLimite(Long contaId, BigDecimal salario) throws ClienteNotFoundException, NegativeSalarioException{
-        if(salario.compareTo(BigDecimal.ONE) < 1){
+    public MensagemDTO updateLimite(MensagemDTO msg) throws ClienteNotFoundException, NegativeSalarioException{
+        ClienteEndDTO dto = mapper.map(msg.getSendObj(), ClienteEndDTO.class);
+        if(dto.getSalario().compareTo(BigDecimal.ONE) < 1){
             throw new NegativeSalarioException("O Salário do Cliente deve ser Maior que R$1");
         }
-        Optional<ContaCUD> conta = repCUD.findById(contaId);
+        Optional<ContaCUD> conta = repCUD.findByIdCliente(dto.getId());
         if(conta.isPresent()){
+            
             ContaCUD ct = conta.get();
+            
+            ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+            msg.setReturnObj(dto2); //Salva estado anterior pra Event Sourcing
+            
             BigDecimal saldo = ct.getSaldo();
-            BigDecimal limite = salario.divide(BigDecimal.valueOf(2)); //Calcula limite
+            BigDecimal limite = dto.getSalario().divide(BigDecimal.valueOf(2)); //Calcula limite
             
             if(saldo.compareTo(BigDecimal.ZERO) < 0){ // Se o saldo for negativo, ou seja menor q 0
                 //multiplica por -1, pra ficar positivo, pra poder comparar com o limite
@@ -122,13 +130,16 @@ public class ContaServiceCUD{
                     limite = saldo; // Coloca o saldo (negativo) como novo limite
                 }
             }
-            ct.setLimite(limite);
-            ct = repCUD.save(ct);
             
-            ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
-            mensagemProducer.syncConta(dto2);
+            ct.setLimite(limite);
+            
+            ct = repCUD.save(ct);
+            dto2 = mapper.map(ct, ContaDTO.class);
+            msg.setSendObj(dto2); //Salva pra próxima fase do saga
+            
+            mensagemProducer.syncConta(dto2); //Synca com bd de Read
                 
-            return dto2;
+            return msg;
         }else{
             throw new ClienteNotFoundException("O Cliente com essa conta não existe");
         }
@@ -156,8 +167,6 @@ public class ContaServiceCUD{
                 ClienteContaDTO dtoCliente = mapper.map(cliente, ClienteContaDTO.class);
                 dtoInfo.setCpf(dtoCliente.getCpf());
                 dtoInfo.setNome(dtoCliente.getNome());
-                dtoInfo.setIdGerente(dtoCliente.getIdGerente());
-                dtoInfo.setNomeGerente(dtoCliente.getNomeGerente());
                 dtoInfo.setSalario(dtoCliente.getSalario());
                 
             }
@@ -173,6 +182,13 @@ public class ContaServiceCUD{
                 .map(item -> mapper.map(item, ContaDTO.class))
                 .collect(Collectors.toList());
         return contaList;
+    }
+    
+    public void rollbackOp(MensagemDTO msg){ 
+        ContaCUD conta = mapper.map(msg.getSendObj(), ContaCUD.class);
+        conta = repCUD.save(conta);
+        ContaDTO dto = mapper.map(conta, ContaDTO.class);
+        mensagemProducer.syncConta(dto);
     }
     
 }

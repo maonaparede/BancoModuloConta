@@ -1,11 +1,8 @@
-
+ 
 package com.tads.dac.conta.modelR;
 
-import com.tads.dac.conta.modelCUD.*;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
@@ -51,6 +48,7 @@ public class ContaR implements Serializable{
     @Temporal(TemporalType.TIMESTAMP)
     private Date dataAproRep;
 
-    @Column(columnDefinition = "VARCHAR(36)")
-    private UUID saga;
+    private Long idGerente;
+    
+    private String nomeGerente;
 }

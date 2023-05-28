@@ -2,14 +2,16 @@
 package com.tads.dac.conta.controller;
 
 import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
+import com.tads.dac.conta.DTOs.ClienteEndDTO;
 import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.ContaSaveDTO;
 import com.tads.dac.conta.DTOs.ContaSituacaoDTO;
+import com.tads.dac.conta.DTOs.MensagemDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
 import com.tads.dac.conta.exception.SituacaoInvalidaException;
-import com.tads.dac.conta.service.ContaServiceCUD;
+import com.tads.dac.conta.service.ContaService;
 import java.math.BigDecimal;
 import java.util.List;
 import org.modelmapper.ModelMapper;
@@ -30,7 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class SistemaController {
     
     @Autowired
-    ContaServiceCUD contaService;
+    ContaService contaService;
     
     @Autowired
     ModelMapper mapper;
@@ -65,8 +67,13 @@ public class SistemaController {
     public ResponseEntity<?> updateLimite(@PathVariable(value = "id") Long id, @PathVariable(value = "salario") BigDecimal salario){
        
         try {
-            ContaDTO dto = contaService.updateLimite(id, salario);
-            return new ResponseEntity<>(dto, HttpStatus.OK);
+            MensagemDTO msg = new MensagemDTO();
+            ClienteEndDTO end = new ClienteEndDTO();
+            end.setId(id);
+            end.setSalario(salario);
+            msg.setSendObj(end);
+            msg = contaService.updateLimite(msg);
+            return new ResponseEntity<>(msg.getSendObj(), HttpStatus.OK);
         } catch (ClienteNotFoundException ex) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (NegativeSalarioException ex) {

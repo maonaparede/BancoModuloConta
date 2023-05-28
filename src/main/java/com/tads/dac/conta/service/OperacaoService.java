@@ -25,7 +25,7 @@ import com.tads.dac.conta.repositoryR.OperacaoRepositoryR;
 import org.modelmapper.ModelMapper;
 
 @Service
-public class OperacaoServiceCUD{
+public class OperacaoService{
     
     @Autowired
     private ContaRepositoryCUD repConta;
@@ -183,7 +183,7 @@ public class OperacaoServiceCUD{
             ct = repConta.save(ct);
             ContaDTO dto = mapper.map(ct, ContaDTO.class);
             contaSyncProducer.syncConta(dto); //Sincroniza o bd de read
-            gerenteSyncProducer.syncClienteSaldo(contaId, saldo); //Manda o Saldo Pro Modulo do Gerente
+            gerenteSyncProducer.syncClienteSaldo(contaId, saldo, ct.getIdGerente()); //Manda o Saldo Pro Modulo do Gerente
             return ct;
         }else{
             throw new ClienteNotFoundException("O Cliente com essa conta ("+ contaId+") não existe");

@@ -1,9 +1,7 @@
 
 package com.tads.dac.conta.mensageria;
 
-import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.GerenciadoSaldoDTO;
-import com.tads.dac.conta.DTOs.OperacaoBdDTO;
 import java.math.BigDecimal;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,9 +13,8 @@ public class ProducerGerenteSaldoSync {
     @Autowired
     private AmqpTemplate template;
     
-    public void syncClienteSaldo(Long idCliente, BigDecimal saldo){
-        System.out.println("Top: " + saldo);
-        GerenciadoSaldoDTO dto = new GerenciadoSaldoDTO(idCliente, saldo);
+    public void syncClienteSaldo(Long idCliente, BigDecimal saldo, Long idGerente){
+        GerenciadoSaldoDTO dto = new GerenciadoSaldoDTO(idCliente, saldo, idGerente);
         template.convertAndSend("gerente", dto);
     }
 }

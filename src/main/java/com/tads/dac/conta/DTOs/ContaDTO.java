@@ -26,5 +26,9 @@ public class ContaDTO {
     
     private Date dataCriacao;
     
-    private Date dataAproRep;      
+    private Date dataAproRep;
+    
+    private String idGerente;
+    
+    private String nomeGerente;   
 }
