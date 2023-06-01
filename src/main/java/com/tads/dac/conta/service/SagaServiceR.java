@@ -16,7 +16,7 @@ public class SagaServiceR {
     @Autowired
     private ContaRepositoryR rep;
     
-    public void rollback(RemoveGerenteDTO dto) {
+    public void rollbackUpdate(RemoveGerenteDTO dto) {
         for(Long id : dto.getContas()){
             Optional<ContaR> con = rep.findById(id);
             con.get().setIdGerente(dto.getGerenteIdOld());
@@ -24,4 +24,7 @@ public class SagaServiceR {
         }
     }
     
+    public void rollbackAutocadastro(Long id){
+        rep.deleteById(id);
+    }    
 }

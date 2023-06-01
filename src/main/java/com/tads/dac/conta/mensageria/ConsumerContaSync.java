@@ -58,6 +58,11 @@ public class ConsumerContaSync {
 
     @RabbitListener(queues = "conta-gerente-rollback")
     public void rollbackOrdem(@Payload RemoveGerenteDTO dto){
-        serv.rollback(dto);
+        serv.rollbackUpdate(dto);
     }    
+    
+    @RabbitListener(queues = "conta-autocadastro-rollback")
+    public void rollbackAutocadastro(@Payload Long id){
+        serv.rollbackAutocadastro(id);
+    } 
 }

@@ -25,6 +25,9 @@ public class AllProducerConfig {
     @Value("conta-gerente-rollback")
     private String queueContaGerenteRollback;  
     
+    @Value("conta-autocadastro-rollback")
+    private String queueContaAutocadastroRollback;
+    
     @Bean
     public Queue queueConta(){
         return new Queue(queueConta);
@@ -48,5 +51,10 @@ public class AllProducerConfig {
     @Bean
     public Queue queueContaGerenteRollback(){
         return new Queue(queueContaGerenteRollback);
-    }    
+    }  
+    
+    @Bean
+    public Queue queueContaAutocadastroRollback(){
+        return new Queue(queueContaAutocadastroRollback);
+    }  
 }

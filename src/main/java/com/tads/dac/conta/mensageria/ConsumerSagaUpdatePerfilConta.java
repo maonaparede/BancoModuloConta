@@ -14,7 +14,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ConsumerSagaConta implements InterfaceConsumer{
+public class ConsumerSagaUpdatePerfilConta implements InterfaceConsumer{
     
     @Autowired
     private ModelMapper mapper;
@@ -27,7 +27,6 @@ public class ConsumerSagaConta implements InterfaceConsumer{
 
     @RabbitListener(queues = "perfil-conta-saga")
     public void commitOrdem(@Payload MensagemDTO msg) {
-        
         try {
             msg = serv.updateLimite(msg);
         } catch (ClienteNotFoundException | NegativeSalarioException ex) {

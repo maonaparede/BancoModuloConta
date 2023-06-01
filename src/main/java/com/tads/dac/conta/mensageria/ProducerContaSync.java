@@ -30,4 +30,8 @@ public class ProducerContaSync {
     public void syncUpdateGerenteRollback(RemoveGerenteDTO dto){
         template.convertAndSend("conta-gerente-rollback", dto);
     }
+
+    public void rollbackAutocadastro(Long id) {
+        template.convertAndSend("conta-autocadastro-rollback", id);
+    }
 }

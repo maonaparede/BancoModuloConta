@@ -13,8 +13,8 @@ public class ProducerGerenteSaldoSync {
     @Autowired
     private AmqpTemplate template;
     
-    public void syncClienteSaldo(Long idCliente, BigDecimal saldo, Long idGerente){
-        GerenciadoSaldoDTO dto = new GerenciadoSaldoDTO(idCliente, saldo, idGerente);
+    public void syncClienteSaldo(Long idConta, BigDecimal saldo, Long idGerente){
+        GerenciadoSaldoDTO dto = new GerenciadoSaldoDTO(idConta, saldo, idGerente);
         template.convertAndSend("gerente", dto);
     }
 }
