@@ -3,9 +3,11 @@ package com.tads.dac.conta.service;
 
 import com.tads.dac.conta.exception.changeGerenteException;
 import com.tads.dac.conta.DTOs.ContaDTO;
+import com.tads.dac.conta.DTOs.GerenciadoGerenteDTO;
 import com.tads.dac.conta.DTOs.GerenciadoGerenteSagaInsertDTO;
 import com.tads.dac.conta.DTOs.GerenteNewOldDTO;
 import com.tads.dac.conta.DTOs.RemoveGerenteDTO;
+import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.mensageria.ConsumerContaSync;
 import com.tads.dac.conta.mensageria.ProducerContaSync;
@@ -77,12 +79,12 @@ public class SagaServiceCUD {
     }
     
     
-    public ContaDTO saveAutocadastro(Long idCliente) throws ContaConstraintViolation{
+    public ContaDTO saveAutocadastro(Long idCliente, BigDecimal salario) throws ContaConstraintViolation{
         try{
             ContaCUD savConta = new ContaCUD();
             savConta.setSaldo(BigDecimal.ZERO);
             savConta.setSituacao("E");
-            savConta.setLimite(BigDecimal.ZERO);
+            savConta.setLimite(salario.divide(BigDecimal.valueOf(2)));
             savConta.setIdCliente(idCliente);
             savConta.setIdConta(null);
             savConta.setDataAproRep(null);
@@ -126,6 +128,21 @@ public class SagaServiceCUD {
         }catch(Exception e){
             System.out.println("Erro na mudança do Gerente:" + e.getMessage());
             throw new changeGerenteException("Não Foi Possível Realizar a Operação");
+        }
+    }
+
+    public ContaDTO finalizaAutocadastroSetaGerente(GerenciadoGerenteDTO dto) throws ClienteNotFoundException {
+        Optional<ContaCUD> ct = rep.findById(dto.getIdConta());
+        if (ct.isPresent()) {
+            ContaCUD conta = ct.get();
+            conta.setIdGerente(dto.getGerenteId());
+            conta.setNomeGerente(dto.getGerenteNome());
+            conta = rep.save(conta);
+            ContaDTO ctDto = mapper.map(conta, ContaDTO.class);
+            contaSync.syncConta(ctDto);
+            return ctDto;
+        }else{
+            throw new ClienteNotFoundException("O Cliente Não Existe!");
         }
     }
 }
