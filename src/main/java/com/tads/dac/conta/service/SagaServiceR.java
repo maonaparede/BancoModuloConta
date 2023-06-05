@@ -26,5 +26,7 @@ public class SagaServiceR {
     
     public void rollbackAutocadastro(Long id){
         rep.deleteById(id);
-    }    
+    }
+    
+    
 }

@@ -56,5 +56,6 @@ public class AllProducerConfig {
     @Bean
     public Queue queueContaAutocadastroRollback(){
         return new Queue(queueContaAutocadastroRollback);
-    }  
+    }
+    
 }

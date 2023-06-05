@@ -59,7 +59,7 @@ public class SagaServiceCUD {
            
            rep.updateGerenteIdNome(dto.getIdOld(), dto.getNomeNew(), dto.getIdNew());
            
-           contaSync.syncUpdateGerente(dto);
+           contaSync.syncRemoveGerenteCommit(dto);
            return ret;
         }catch(Exception e){
             throw new Exception("Houve Algum Erro Na Mudança(Exclusão) de Gerentes no Módulo Conta");
@@ -74,7 +74,7 @@ public class SagaServiceCUD {
             rep.save(con.get());
         }
         
-        contaSync.syncUpdateGerenteRollback(dto);
+        contaSync.syncRemoveGerenteRollback(dto);
         
     }
     
@@ -122,7 +122,9 @@ public class SagaServiceCUD {
                 conta.setIdGerente(dto.getGerenteIdNew());
                 conta.setNomeGerente(dto.getGerenteNomeNew());
 
-                rep.save(conta);
+                conta = rep.save(conta);
+                ContaDTO dto2 = mapper.map(conta, ContaDTO.class);
+                contaSync.syncConta(dto2);
             }
             return dto;
         }catch(Exception e){

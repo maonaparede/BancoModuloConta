@@ -23,15 +23,16 @@ public class ProducerContaSync {
         template.convertAndSend("operacao", dto);
     }
     
-    public void syncUpdateGerente(GerenteNewOldDTO dto){
+    public void syncRemoveGerenteCommit(GerenteNewOldDTO dto){
         template.convertAndSend("conta-gerente", dto);
     }
     
-    public void syncUpdateGerenteRollback(RemoveGerenteDTO dto){
+    public void syncRemoveGerenteRollback(RemoveGerenteDTO dto){
         template.convertAndSend("conta-gerente-rollback", dto);
     }
 
     public void rollbackAutocadastro(Long id) {
         template.convertAndSend("conta-autocadastro-rollback", id);
     }
+    
 }

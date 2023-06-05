@@ -52,17 +52,17 @@ public class ConsumerContaSync {
     }
 
     @RabbitListener(queues = "conta-gerente")
-    public void enviaSyncContaGerente(@Payload GerenteNewOldDTO dto){
+    public void commitRemoveGerente(@Payload GerenteNewOldDTO dto){
         rep.updateGerenteIdNome(dto.getIdOld(), dto.getNomeNew(), dto.getIdNew());
     }
 
     @RabbitListener(queues = "conta-gerente-rollback")
-    public void rollbackOrdem(@Payload RemoveGerenteDTO dto){
+    public void rollbackRemoveGerente(@Payload RemoveGerenteDTO dto){
         serv.rollbackUpdate(dto);
     }    
     
     @RabbitListener(queues = "conta-autocadastro-rollback")
     public void rollbackAutocadastro(@Payload Long id){
         serv.rollbackAutocadastro(id);
-    } 
+    }
 }
