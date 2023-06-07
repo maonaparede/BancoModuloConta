@@ -20,18 +20,12 @@ public class ClienteContaInfoDTO {
     
     private String nome;
     
-    private BigDecimal salario;
-    
     private String cpf;
     
     private BigDecimal saldo;
     
-    private BigDecimal limite;
+    private String cidade;
     
-    private String situacao;
-    
-    private Date dataCriacao;
-    
-    private Date dataAproRep;
+    private String estado;
     
 }

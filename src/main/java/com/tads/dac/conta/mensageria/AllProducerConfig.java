@@ -42,7 +42,7 @@ public class AllProducerConfig {
     public Queue queueCliente(){
         return new Queue(queueGerente);
     }
-        
+
     @Bean
     public Queue queueContaGerente(){
         return new Queue(queueContaGerente);

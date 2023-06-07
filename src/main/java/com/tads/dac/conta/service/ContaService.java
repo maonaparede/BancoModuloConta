@@ -1,12 +1,12 @@
 
 package com.tads.dac.conta.service;
 
+import com.tads.dac.conta.DTOs.AprovaR9DTO;
 import com.tads.dac.conta.DTOs.ClienteContaDTO;
 import com.tads.dac.conta.DTOs.ClienteContaInfoDTO;
-import com.tads.dac.conta.DTOs.ClienteEndDTO;
 import com.tads.dac.conta.DTOs.ContaDTO;
-import com.tads.dac.conta.DTOs.ContaSituacaoDTO;
 import com.tads.dac.conta.DTOs.MensagemDTO;
+import com.tads.dac.conta.DTOs.PerfilUpdateDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
 import com.tads.dac.conta.exception.NegativeSalarioException;
@@ -75,32 +75,20 @@ public class ContaService{
     }
     
     
-    public ContaDTO updateSituacao(ContaSituacaoDTO dto) throws ClienteNotFoundException, SituacaoInvalidaException{
-        Optional<ContaCUD> conta = repCUD.findById(dto.getContaId());
+    public ContaDTO AprovarCliente(Long id) throws ClienteNotFoundException, SituacaoInvalidaException{
+        Optional<ContaCUD> conta = repCUD.findById(id);
         if(conta.isPresent()){
             ContaCUD ct = conta.get();
             Date dt = Date.from(Instant.now());
-            if("A".equals(dto.getSituacao())){
-                ct.setSituacao("A");
-                ct.setLimite(dto.getSalario().divide(BigDecimal.valueOf(2)));
-                ct.setDataAproRep(dt);
-                ct = repCUD.save(ct);
-                
-                ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
-                mensagemProducer.syncConta(dto2);
-                
-                return dto2;
-            }else if("R".equals(dto.getSituacao())){
-                ct.setSituacao("R");
-                ct.setDataAproRep(dt);
-                ct = repCUD.save(ct);
-                
-                ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
-                mensagemProducer.syncConta(dto2);
-                
-                return dto2;
-            }
-            throw new SituacaoInvalidaException("Esse Estado de Situação Não Existe");
+            ct.setSituacao("A");
+            ct.setDataAproRep(dt);
+            ct = repCUD.save(ct);
+            
+            ///Sync bd R
+            ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+            mensagemProducer.syncConta(dto2);
+            
+            return dto2;
         }else{
             throw new ClienteNotFoundException("O Cliente Com Essa Conta Não Existe");
         }
@@ -108,17 +96,17 @@ public class ContaService{
 
     
     public MensagemDTO updateLimite(MensagemDTO msg) throws ClienteNotFoundException, NegativeSalarioException{
-        ClienteEndDTO dto = mapper.map(msg.getSendObj(), ClienteEndDTO.class);
+        PerfilUpdateDTO dto = mapper.map(msg.getReturnObj(), PerfilUpdateDTO.class);
         if(dto.getSalario().compareTo(BigDecimal.ONE) < 1){
             throw new NegativeSalarioException("O Salário do Cliente deve ser Maior que R$1");
         }
-        Optional<ContaCUD> conta = repCUD.findByIdCliente(dto.getId());
+        Optional<ContaCUD> conta = repCUD.findByIdCliente(dto.getIdCliente());
         if(conta.isPresent()){
             
             ContaCUD ct = conta.get();
             
             ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
-            msg.setReturnObj(dto2); //Salva estado anterior pra Event Sourcing
+            msg.setSendObj(dto2); //Salva estado anterior pra Event Sourcing
             
             BigDecimal saldo = ct.getSaldo();
             BigDecimal limite = dto.getSalario().divide(BigDecimal.valueOf(2)); //Calcula limite
@@ -135,7 +123,6 @@ public class ContaService{
             
             ct = repCUD.save(ct);
             dto2 = mapper.map(ct, ContaDTO.class);
-            msg.setSendObj(dto2); //Salva pra próxima fase do saga
             
             mensagemProducer.syncConta(dto2); //Synca com bd de Read
                 
@@ -153,13 +140,9 @@ public class ContaService{
             
             ClienteContaInfoDTO dtoInfo = new ClienteContaInfoDTO();
             
-            dtoInfo.setDataAproRep(dto.getDataAproRep());
-            dtoInfo.setDataCriacao(dto.getDataCriacao());
             dtoInfo.setIdCliente(dto.getIdCliente());
             dtoInfo.setIdConta(dto.getIdConta());
-            dtoInfo.setLimite(dto.getLimite());
             dtoInfo.setSaldo(dto.getSaldo());
-            dtoInfo.setSituacao(dto.getSituacao());
             
             
             Optional<ClienteR> cliente = repClienteR.findById(dto.getIdCliente());
@@ -167,21 +150,13 @@ public class ContaService{
                 ClienteContaDTO dtoCliente = mapper.map(cliente, ClienteContaDTO.class);
                 dtoInfo.setCpf(dtoCliente.getCpf());
                 dtoInfo.setNome(dtoCliente.getNome());
-                dtoInfo.setSalario(dtoCliente.getSalario());
-                
+                dtoInfo.setCidade(dtoCliente.getCidade());
+                dtoInfo.setEstado(dtoCliente.getEstado());
             }
             return dtoInfo;
         }
         
         throw new ClienteNotFoundException("O Cliente com essa conta não existe");
-    }
-    
-    public List<ContaDTO> getAllSituacaoEsperando(){
-        List<ContaR> contas = repR.findAllBySituacao("E");
-        List<ContaDTO> contaList = contas.stream()
-                .map(item -> mapper.map(item, ContaDTO.class))
-                .collect(Collectors.toList());
-        return contaList;
     }
     
     public void rollbackOp(MensagemDTO msg){ 

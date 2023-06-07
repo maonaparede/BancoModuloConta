@@ -27,12 +27,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class UserContaController {
     
     @Autowired
-    OperacaoService opService;
+    private OperacaoService opService;
   
     @Autowired
-    ContaService contaService;
+    private ContaService contaService;
     
-   
+    //R13 ou R3
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getContaInfo(@PathVariable("id") Long id){
         try{
@@ -44,7 +44,7 @@ public class UserContaController {
     }
     
     
-     
+    //R8
     @GetMapping("/user/{id}/{dataInicio}/{dataFim}")
     public ResponseEntity<?> getExtrato(
             @PathVariable Long id,
@@ -60,6 +60,7 @@ public class UserContaController {
         }
     }
     
+    //R5, R6, R7
     @PostMapping("/user")
     public ResponseEntity<?> fazOperacao(@RequestBody OperacaoDTO op){
         try{

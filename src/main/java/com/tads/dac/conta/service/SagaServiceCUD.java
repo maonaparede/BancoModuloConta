@@ -6,16 +6,20 @@ import com.tads.dac.conta.DTOs.ContaDTO;
 import com.tads.dac.conta.DTOs.GerenciadoGerenteDTO;
 import com.tads.dac.conta.DTOs.GerenciadoGerenteSagaInsertDTO;
 import com.tads.dac.conta.DTOs.GerenteNewOldDTO;
+import com.tads.dac.conta.DTOs.RejeitaClienteDTO;
 import com.tads.dac.conta.DTOs.RemoveGerenteDTO;
 import com.tads.dac.conta.exception.ClienteNotFoundException;
 import com.tads.dac.conta.exception.ContaConstraintViolation;
+import com.tads.dac.conta.exception.SituacaoInvalidaException;
 import com.tads.dac.conta.mensageria.ConsumerContaSync;
 import com.tads.dac.conta.mensageria.ProducerContaSync;
 import com.tads.dac.conta.modelCUD.ContaCUD;
 import com.tads.dac.conta.repositoryCUD.ContaRepositoryCUD;
 import java.math.BigDecimal;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
@@ -146,5 +150,44 @@ public class SagaServiceCUD {
         }else{
             throw new ClienteNotFoundException("O Cliente Não Existe!");
         }
+    }
+    
+    public ContaDTO AprovarCliente(Long id, String situacao) throws ClienteNotFoundException{
+        Optional<ContaCUD> conta = rep.findByIdCliente(id);
+        if(conta.isPresent()){
+            ContaCUD ct = conta.get();
+            Date dt = Date.from(Instant.now());
+            ct.setSituacao(situacao);
+            ct.setDataAproRep(dt);
+            ct = rep.save(ct);
+            
+            ///Sync bd R
+            ContaDTO dto2 = mapper.map(ct, ContaDTO.class);
+            contaSync.syncConta(dto2);
+            
+            return dto2;
+        }else{
+            throw new ClienteNotFoundException("O Cliente Com Essa Conta Não Existe");
+        }
+    }
+
+    public ContaDTO rejeitaCliente(RejeitaClienteDTO dto) throws ClienteNotFoundException {
+        Optional<ContaCUD> ct = rep.findByIdCliente(dto.getIdCLiente());
+        if(ct.isPresent()){
+            ContaCUD conta = ct.get();
+            dto.setIdConta(conta.getIdConta());
+            rollbackAutocadastro(conta.getIdConta());
+            
+            ContaDTO ctDto = mapper.map(conta, ContaDTO.class);
+            return ctDto;
+        }else{
+            throw new ClienteNotFoundException("Essa Conta não Existe!");
+        }
+    }
+
+    public void rollbackRejeitaCliente(ContaDTO dto) {
+        ContaCUD conta = mapper.map(dto, ContaCUD.class);
+        rep.save(conta);
+        contaSync.syncConta(dto);
     }
 }

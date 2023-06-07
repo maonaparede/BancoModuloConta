@@ -2,17 +2,18 @@
 package com.tads.dac.conta.repositoryR;
 
 import com.tads.dac.conta.modelR.ContaR;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 
 public interface ContaRepositoryR extends JpaRepository<ContaR, Long> {
     
-    public List<ContaR> findAllBySituacao(String sit);
     
     public Optional<ContaR> findByIdCliente(Long id);
     

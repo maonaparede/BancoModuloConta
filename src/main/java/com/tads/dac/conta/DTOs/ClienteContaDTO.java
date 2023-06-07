@@ -21,4 +21,7 @@ public class ClienteContaDTO {
     
     private String cpf;
     
+    private String cidade;
+    
+    private String estado;    
 }
